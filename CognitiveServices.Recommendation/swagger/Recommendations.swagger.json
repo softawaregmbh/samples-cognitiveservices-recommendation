@@ -1,0 +1,2653 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Recommendations",
+    "version": "1.0",
+    "description": "The Recommendations API identifies consumption patterns from your transaction information in order to provide recommendations. These recommendations can help your customers more easily discover items that they may be interested in.<br> By showing your customers products that they are more likely to be interested in, you will, in turn, increase your sales."
+  },
+  "host": "westus.api.cognitive.microsoft.com",
+  "basePath": "/recommendations/v4.0",
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/models/{modelId}/builds": {
+      "get": {
+        "description": "Retrieves information on all builds for a given model.",
+        "operationId": "Get all builds",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "onlyLastRequestedBuild",
+            "in": "query",
+            "description": "true to return only the last build of the model, false to return all the builds",
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BuildInfoList"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "post": {
+        "description": "<style type=\"text/css\">\r\n    <!--\r\n    .tab {\r\n        margin-left: 40px;\r\n    }\r\n    -->\r\n</style>\r\n<p>\r\n    By creating a new build, you start the training process that will allow you to generate a machine learning model that you can later on query for recommendations.\r\n</p>\r\n<p>\r\n    Before triggering a build you first must upload catalog and usage data. \r\n    Triggering a new build is an asynchronous operations.   Once a build is triggered you will receive an <i>operation</i> (in the Operation-Location header of the response) \r\n    that you can use to track the build status, or to cancel the build operation.\r\n    See the \"Retrieve the status of an operation\" API.\r\n</p>\r\n\r\n<p>\r\n    There are 3 types of builds: a <i>Recommendation</i> build, a <i>Rank</i> build and an <i> FBT</i> build.\r\n</p>\r\n\r\n<p>\r\n<b>Recommendation build</b><br />\r\n    Predictions (for this type of build) come in two flavors:\r\n    <br>\r\n<p class=\"tab\">\r\n    <i>Item to Item recommendations (I2I)</i>\r\n    <br>Given an item or a list of items, it will predict other items that are likely to be of high interest to customers that have interacted with the original set of items.\r\n</p>\r\n<p class=\"tab\">\r\n    <i>User to Item recommendations (U2I) </i>\r\n    <br>Given a user id (and optionally a list of items) this option will predict a list of items that are likely to be of high interest to the given user (and its additional choice of items). The U2I recommendations are based on the history of items that were of interest to the user.\r\n</p>\r\n\r\n<p>\r\n<b>FBT or Frequently-Bought-Together build</b><br />\r\nAn FBT build is yet another recommendations algorithm called sometimes a \"conservative\" recommender.  It counts the number of times two or three different products co-occur together, and then sorts the sets based on a similarity function (Co-occurrences, Jaccard, Lift). \r\nGiven an item, and FBT build returns other items that are likely to occur in the same transaction.\r\n<br />\r\n    Note: If the usage files that you uploaded contain the optional field \"event type\", for FBT modelling only \"Purchase\" events will be used. If no event type is provided all events will be considered as purchase events.\r\n</p>\r\n\r\n<p>\r\n<b>Rank build</b><br/>\r\nA rank build is a technical build that allows you to learn about the usefulness of your features.</p>\r\n<p>\r\n    <b>Learn more</b><br />\r\n    More information about different build types can be found on the \r\n    <a href=\"https://azure.microsoft.com/en-us/documentation/articles/cognitive-services-recommendations-buildtypes/\">Build Types and Model Quality</a> document.\r\n</p>\r\n\r\n<p>\r\n    <b>Generic Build Parameters</b>\r\n\r\n    <table border=\"1\" cellpadding=\"05\" cellspacing=\"5\" style=\"border-collapse:collapse;\">\r\n        <tr>\r\n            <td>Name </td>\r\n            <td>Description</td>\r\n            <td>Type</td>\r\n            <td>Valid Value</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Description</td>\r\n            <td>The description of the build.</td>\r\n            <td>String</td>\r\n            <td>Any text, maximum 512 chars</td>\r\n        </tr>\r\n        <tr>\r\n            <td>BuildType</td>\r\n            <td>The type of build.</td>\r\n            <td>String</td>\r\n            <td>Either <i>recommendation</i>, <i>fbt</i> or <i>rank</i></td>\r\n        </tr>\r\n\r\n\r\n    </table>\r\n</p>\r\n\r\n<p>\r\n<b>Recommendation Build Type Parameters</b><br />\r\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"5\" style=\"border-collapse:collapse;\">\r\n    <tr>\r\n        <td>Name </td>\r\n        <td>Description</td>\r\n        <td>Type</td>\r\n        <td>Valid Value</td>\r\n    </tr>\r\n    <tr>\r\n        <td>NumberOfModelIterations</td>\r\n        <td>The number of iterations the model performs is reflected by the overall compute time and the model accuracy. The higher the number, the better accuracy you will get, but the compute time will take longer. (Default is 20)</td>\r\n        <td>Integer</td>\r\n        <td>10 to 50</td>\r\n    </tr>\r\n    <tr>\r\n        <td>NumberOfModelDimensions</td>\r\n        <td>The number of dimensions relates to the number of 'features' the model will try to find within your data. Increasing the number of dimensions will allow better fine-tuning of the results into smaller clusters. However, too many dimensions will prevent the model from finding correlations between items.</td>\r\n        <td>Integer</td>\r\n        <td>10 to 40</td>\r\n    </tr>\r\n    <tr>\r\n        <td>ItemCutOffLowerBound</td>\r\n        <td>Defines the minimum number of usage points an item should be in for it to be considred in the model.</td>\r\n        <td>Integer</td>\r\n        <td>2 or More.</td>\r\n    </tr>\r\n    <tr>\r\n        <td>ItemCutOffUpperBound</td>\r\n        <td>Defines the maximum number of usage points an item should be in for it to be considered in the model.</td>\r\n        <td>Integer</td>\r\n        <td>2 or More.</td>\r\n    </tr>\r\n\r\n    <tr>\r\n        <td>UserCutOffLowerBound</td>\r\n        <td>Defines the minimum number of transactions a user must have performed to be considered in the model.</td>\r\n        <td>Integer</td>\r\n        <td>2 or More.</td>\r\n    </tr>\r\n    <tr>\r\n        <td>ItemCutOffUpperBound</td>\r\n        <td>Defines the maximum number of transactions a user must have performed to be considered in the model.</td>\r\n        <td>Integer</td>\r\n        <td>2 or More.</td>\r\n    </tr>\r\n    <tr>\r\n        <td>EnableModelingInsights</td>\r\n        <td>Defines whether offline evaluation should be performed in order to gather modeling insights (i.e. precision and diversity metrics).\r\n            If set to true, a subset of the data will not be used for training as it will need to be reserved for testing of the model.\r\n            <a href=\"https://azure.microsoft.com/en-us/documentation/articles/cognitive-services-recommendations-buildtypes/#offline-evaluation\" >Read more about offline evaluations</a>\r\n        </td>\r\n        <td>Boolean</td>\r\n        <td>Valid Values: True/False</td>\r\n    </tr>\r\n\r\n    <tr>\r\n        <td>UseFeaturesInModel</td>\r\n        <td>\r\n            Indicates if features can be used in order to enhance the recommendation model.\r\n        </td>\r\n        <td>Boolean</td>\r\n        <td>Valid Values: True/False</td>\r\n    </tr>\r\n\r\n\r\n    <tr>\r\n        <td>ModelingFeatureList</td>\r\n        <td> Comma-separated list of feature names to be used in the recommendation build, in order to enhance the recommendation.\r\n             If the given list is empty, no features will be used to train the model.\r\n        </td>\r\n        <td>String</td>\r\n        <td>Valid Values: Feature names, up to 512 chars</td>\r\n    </tr>\r\n    <tr>\r\n        <td>AllowColdItemPlacement</td>\r\n        <td>Indicates if the recommendation should also push cold items via feature similarity.</td>\r\n        <td>Boolean</td>\r\n        <td>Valid Values: True/False</td>\r\n    </tr>\r\n    <tr>\r\n        <td>EnableFeatureCorrelation</td>\r\n        <td>Indicates if features can be used in reasoning.</td>\r\n        <td>Boolean</td>\r\n        <td>Valid Values: True/False</td>\r\n    </tr>\r\n    <tr>\r\n        <td>ReasoningFeatureList</td>\r\n        <td>Comma-separated list of feature names to be used for reasoning sentences (e.g. recommendation explanations).</td>\r\n        <td>String</td>\r\n        <td>Valid Values: Feature names, up to 512 chars</td>\r\n    </tr>\r\n    <tr>\r\n        <td>EnableU2I</td>\r\n        <td>Enable personalized recommendation a.k.a. U2I (user to item recommendations).</td>\r\n        <td>Boolean</td>\r\n        <td>Valid Values: True/False</td>\r\n    </tr>\r\n</table>\r\n</p>\r\n\r\n<p>\r\n    <b>FBT Build Parameters</b><br />\r\n    <table border=\"1\" cellpadding=\"5\" cellspacing=\"5\" style=\"border-collapse:collapse;\">\r\n        <tr>\r\n            <td>FbtSupportThreshold</td>\r\n            <td>How conservative the model is. Number of co-occurrences of items to be considered for modeling.</td>\r\n            <td>Integer</td>\r\n            <td>Valid Values: 3-50 (default: 6)</td>\r\n        </tr>\r\n        <tr>\r\n            <td>FbtMaxItemSetSize</td>\r\n            <td>Bounds the number of items in a frequent set.</td>\r\n            <td>Integer</td>\r\n            <td>Valid Values: 2-3 (default: 2)</td>\r\n        </tr>\r\n        <tr>\r\n            <td>FbtMinimalScore</td>\r\n            <td>Minimal score that a frequent set should have in order to be included in the returned results. The higher the better.</td>\r\n            <td>Double</td>\r\n            <td>0 and above</td>\r\n        </tr>\r\n        <tr>\r\n            <td>FbtSimilarityFunction</td>\r\n            <td>Defines the similarity function to be used by the build. Lift favors serendipity, Co-occurrence favors predictability, and Jaccard is a nice compromise between the two.</td>\r\n            <td>String</td>\r\n            <td>cooccurrence, lift, jaccard \t(default: lift)</td>\r\n        </tr>\r\n    </table>\r\n</p>\r\n\r\n\r\n\r\n    <p>\r\n        <b>Rank Build Parameters</b>\r\n        <table border=\"1\" cellpadding=\"5\" cellspacing=\"5\" style=\"border-collapse:collapse;\">\r\n            <tr>\r\n                <td>NumberOfModelIterations</td>\r\n                <td>The number of iterations the model performs is reflected by the overall compute time and the model accuracy. The higher the number, the better accuracy you will get, but the compute time will take longer.</td>\r\n                <td>Integer</td>\r\n                <td>10-50</td>\r\n            </tr>\r\n            <tr>\r\n                <td>NumberOfModelDimensions</td>\r\n                <td>The number of dimensions relates to the number of 'features' the model will try to find within your data. Increasing the number of dimensions will allow better fine-tuning of the results into smaller clusters. However, too many dimensions will prevent the model from finding correlations between items.</td>\r\n                <td>Integer</td>\r\n                <td>10-40</td>\r\n            </tr>\r\n            <tr>\r\n                <td>ItemCutOffLowerBound</td>\r\n                <td>Defines the minimum number of usage points an item should be in for it to be considred in the model.</td>\r\n                <td>Integer</td>\r\n                <td>0-30</td>\r\n            </tr>\r\n            <tr>\r\n                <td>ItemCutOffUpperBound</td>\r\n                <td>Defines the maximum number of usage points an item should be in for it to be considered in the model.</td>\r\n                <td>Integer</td>\r\n                <td>Greater than ItemCutOffLowerBound</td>\r\n            </tr>\r\n\r\n            <tr>\r\n                <td>UserCutOffLowerBound</td>\r\n                <td>Defines the minimum number of transactions a user must have performed to be considered in the model.</td>\r\n                <td>Integer</td>\r\n                <td>0-10</td>\r\n            </tr>\r\n            <tr>\r\n                <td>UserCutOffUpperBound</td>\r\n                <td>Defines the maximum number of transactions a user must have performed to be considered in the model.</td>\r\n                <td>Integer</td>\r\n                <td>Greater than UserCutOffLowerBound</td>\r\n            </tr>\r\n        </table>\r\n</p>\r\n\r\n<br>\r\n<p>\r\n    Example:\r\n    <br>\r\n<PRE>\r\n{<br>\r\n\"description\": \"Simple recomendations build\",<br>\r\n\"buildType\": \"recommendation\",<br>\r\n\"buildParameters\": {<br>\r\n    \"recommendation\": {<br>\r\n      \"numberOfModelIterations\": 10,<br>\r\n      \"numberOfModelDimensions\": 40,<br>\r\n      \"itemCutOffLowerBound\": 1,<br>\r\n      \"itemCutOffUpperBound\": 10,<br>\r\n      \"userCutOffLowerBound\": 0,<br>\r\n      \"userCutOffUpperBound\": 0,<br>\r\n      \"enableModelingInsights\": false,<br>\r\n      \"useFeaturesInModel\": false,<br>\r\n      \"modelingFeatureList\": \"string\",<br>\r\n      \"allowColdItemPlacement\": false,<br>\r\n      \"enableFeatureCorrelation\": true,<br>\r\n      \"reasoningFeatureList\": \"string\",<br>\r\n      \"enableU2I\": true<br>\r\n    }<br>\r\n  }<br>\r\n}<br>\r\n</PRE>\r\n</p>\r\n",
+        "operationId": "Create/Trigger build",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "buildRequestInfo",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/BuildRequestInfo"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded"
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted.\r\nThe <b>Operation-Location</b> header can be used to query the status of the build. See <i>Retrieve the status of an operation</i> API.",
+            "schema": {
+              "$ref": "#/definitions/BuildModelResponse"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/builds/{buildId}": {
+      "get": {
+        "description": "Retrieves information about the build, including parameters used to build it.",
+        "operationId": "Get build by id",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "buildId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the build",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BuildInfo"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a build.\r\n<p>You cannot delete an active build, you will get an error. The model should be updated to a different active build before you delete it. </p>\r\n<p>You cannot delete an in-progress build. You should cancel the build first by submitting Cancel Build request.</p>",
+        "operationId": "Delete build",
+        "parameters": [
+          {
+            "name": "buildId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the build",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "modelId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/recommend/item": {
+      "get": {
+        "description": "<p>Get recommendations for one or more items based on a specific build.</p>\r\n<p>Special cases: <br>\r\n    1. If the item list contains just a single item that is not in the catalog - an empty list is returned.<br>\r\n    2. If the item list contains some items that don't appear in the catalog - these are removed and a result is generated based on the other items.<br>\r\n    3. If an item list contains only <i>cold items</i> the <i>most popular</i> recommendation list is generated as a response.<br>\r\n    4. If the items list contains some <i>cold</i> items (after removing the items that don't appear in the catalog) - the result is generated based on the other items only.<br>\r\n<p>\r\n    Empty recommendations may be returned if none of the items are in the catalog or if the trained model did not have sufficient data to provide recommendations for the items.\r\n</p>",
+        "operationId": "Get item-to-item recommendations",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "itemIds",
+            "in": "query",
+            "description": "Comma-separated list of the items to recommend for. If the active build is of type FBT, then you can send only one item. Max length: 1024",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "numberOfResults",
+            "in": "query",
+            "description": "Format - int32. Number of recommended items to return",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "minimalScore",
+            "in": "query",
+            "description": "Format - double. Minmal score, currently honored for only FBT builds.",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "includeMetadata",
+            "in": "query",
+            "description": "Future use, always false.",
+            "type": "boolean"
+          },
+          {
+            "name": "buildId",
+            "in": "query",
+            "description": "Format - int64. The build id to use for this recommendation request. If the number is less than 0, uses the active build of the model instead.",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RecommendedItemSetInfoList"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models": {
+      "get": {
+        "description": "Retrieves all models.",
+        "operationId": "Get all models",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ModelInfoList"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "post": {
+        "description": "A model is a container of your usage data, catalog data and the recommendation model.<br>\r\nOnce you have created a model, you can upload your catalog data, upload your usage data and start the training process by creating builds on that model.\r\n\r\n<p><b>Notes</b></p>\r\n<p>You may create up to 10 models. If you need to delete unused models, you may use the \"Delete a model\" API.</p>",
+        "operationId": "Create model",
+        "parameters": [
+          {
+            "name": "modelRequestInfo",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ModelRequestInfo"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/ModelInfo"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{id}": {
+      "get": {
+        "description": "Retrieves information about a model with a given ID.",
+        "operationId": "Get model",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique identifier of the model to be fetched.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ModelInfo"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "delete": {
+        "description": "Deletes an existing model by ID.",
+        "operationId": "Delete model",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "patch": {
+        "description": "<p>Allows you to update the description or the active build for a model.</p>\r\n<p><b>Active build ID</b>\r\n     – Every build for every model has a build ID. By default the first build produced is set as the active build for the model. \r\n    Once you have an active build ID and you do additional builds for the same model, you need to explicitly set it as the default build ID if you want to. When you consume recommendations, if you do not specify the build ID that you want to use, the default one will be used automatically.</p><p>This mechanism enables you - once you have a recommendation model in production - to build new models and test them before you promote them to production.</p>",
+        "operationId": "Update model",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "updateModelRequestInfo",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateModelRequestInfo"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/operations/{id}": {
+      "get": {
+        "description": "<p>Retrieves the status of an operation given the operation ID. You will need to use this API to track the status of a build operation, for instance.</p><p>To get the operation ID location, you should check the Operation-Location header that is returned on the response when you are triggering a build.</p>",
+        "operationId": "Get operation status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Operation ID",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/OperationInfo[BuildInfo]"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "delete": {
+        "description": "<p>Cancels an ongoing operation. One example is to cancel a build request that was submitted.</p>\r\n<p>To get the operation ID location, you should check the <i>Operation-Location</i> header that is returned on the response when \r\n    you are triggering a build.</p>",
+        "operationId": "Cancel operation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Operation ID",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/recommend/user": {
+      "get": {
+        "description": "Get user recommendations of a build of type \"Recommendation\" marked as active build.<br>\r\nThe API will return a list of predicted items according to the usage history of the user.<br>\r\nNote:  There is no user recommendation for an <i>FBT</i> build. If the active build is <i>FBT</i>, this method will return an error.\r\n\r\n<p><b>Note</b></p>\r\n<p>The EnableU2I build parameter needs to be set to true in order to train the model so that it can support user recommendations.</p>",
+        "operationId": "Get user-to-item recommendations",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "Unique user identifier.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "numberOfResults",
+            "in": "query",
+            "description": "Format - int32. Number of recommended items to return.",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "itemsIds",
+            "in": "query",
+            "description": "The unique identifiers of the items to consider in addition to user history.",
+            "type": "string"
+          },
+          {
+            "name": "includeMetadata",
+            "in": "query",
+            "description": "If true - include items' metadata",
+            "type": "boolean"
+          },
+          {
+            "name": "buildId",
+            "in": "query",
+            "description": "Format - int64. Build identifier, if the number is less than 0, uses the active build of the model instead.",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RecommendedItemSetInfoList"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/catalog": {
+      "post": {
+        "description": "<p>Once you have created a model, you will need to upload catalog data and usage data to it before you can train the system and create a build.\r\nThe catalog data contains information about the items you are offering to your customer.<p>\r\n<p>    \r\nIt needs to be passed as the content of body request and it should follow this format.<br /> \r\n<br>\r\n        &lt; Id&gt;,&lt;Item Name&gt;,&lt;Item Category&gt;,[&lt;Description&gt;],&lt;Features list&gt;\r\n</p>\r\n<p>\r\n    <b>\r\n        Additional details\r\n    </b><br />\r\n</p>\r\n\r\n    <table border=\"1\" cellpadding=\"10\" cellspacing=\"10\" style=\"border-collapse:collapse;\" >\r\n        <tr>\r\n            <td>Name </td> <td>Mandatory</td><td>Type</td><td>Description</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Item Id</td>\r\n            <td>Yes</td>\r\n            <td>[A-z], [a-z], [0-9], [_] &#40;Underscore&#41;, [-] &#40;Dash&#41;<br> Max length: 50</td>\r\n            <td>Unique identifier of an item.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Item Name</td>\r\n            <td>Yes</td>\r\n            <td>Any alphanumeric characters<br> Max length: 255</td>\r\n            <td>Item name.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Item Category</td>\r\n            <td>Yes</td>\r\n            <td>Any alphanumeric characters<br> Max length: 255</td>\r\n            <td>Category to which this item belongs (e.g. Cooking Books, Drama...); can be empty.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Description</td>\r\n            <td>No, unless features are present (but can be empty)</td>\r\n            <td>Any alphanumeric characters <br> Max length: 4000 </td>\r\n            <td>Description of this item.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Features list</td>\r\n            <td>No</td>\r\n            <td>Any alphanumeric characters <br> Max length: 4000</td>\r\n            <td>Comma-separated list of feature name=feature value that can be used to enhance model recommendation.</td>\r\n        </tr>\r\n    </table>\r\n</p>\r\n<p>\r\n<b>Example without features</b><br/><br/>\r\nAAA04294,Office Language Pack Online DwnLd,Office<br>\r\nAAA04303,Minecraft Download Game,Games<br>\r\nC9F00168,Kiruna Flip Cover,Accessories<br>\r\n</p>\r\n<p>\r\n<b>Example with features</b><br><br />\r\nAAA04294,Office Language Pack Online DwnLd,Office,, softwaretype=productivity, compatibility=Windows<br/>\r\nBAB04303,Minecraft DwnLd,Games,, softwaretype=gaming, compatibility=iOS, agegroup=all<br />\r\nC9F00168,Kiruna Flip Cover,Accessories,, compatibility=lumia, hardwaretype=mobile<br />\r\n<br/>\r\n</p>\r\n<p>\r\n    More information on what data to collect, including the purpose of adding features to a catalog can be found at the\r\n    <a href=\"https://azure.microsoft.com/en-us/documentation/articles/cognitive-services-recommendations-collecting-data/\">Collecting Training Data</a> document.\r\n</p>\r\n\r\n<p>\r\n<b>Notes</b><br />\r\nThe maximum numbe of items supported is 100,000.<br />\r\nThe maximum size of data that can be sent in a single POST call for this API is 200MB. You may call this API several times upload more catalog data to your project. If you call this API several times, the system will insert only the new catalog items; Existing items will remain with the original values.  You cannot update catalog items by using this API.\r\n</p>\r\n\r\n",
+        "operationId": "Upload a catalog file to a model",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "catalogDisplayName",
+            "in": "query",
+            "description": "Display name of the catalog data. e.g. \"CatalogFile1\"\r\n            Only letters (A-Z, a-z), numbers (0-9), hyphens (-) and underscore (_) are allowed. Max length: 50",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CatalogImportStats"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "get": {
+        "description": "<p>\r\n    Retrieves a list of catalog items. <br />\r\n    Currently the API returns a paginated list of items in JSON format.\r\n    Make sure to set the Accept request header to the desired format. Currently the only format supported is json, so the Accept header should be set as follows:\r\n    <pre>\r\n    Accept:application/json\r\n    </pre>\r\n</p>\r\n<p>\r\n    You may set the optional 'skip' parameter to start listing items at an offset.\r\n    If the requested number of items (specified using the 'top' parameters) is larger than the server default page size,  only the first default page size items will be returned and a '@nextLink' property will be added to the response, linking tho the rest of the request items.\r\n    The parameter 'maxPageSize' defines the maximum items count to return in a single page.  MaxPageSize will be honored only if lower than server's default page size.\r\n</p>\r\n            \r\n<p>\r\n    <b>Examples</b> <br />\r\n    (Assuming server's default page size of 10)\r\n</p>\r\n<p>\r\n    Example 1: Server driven pagination\r\n<pre>\r\n    GET /items\r\n    =&gt; {\r\n    \"items\": [1..10],\r\n    \"@nextLink\": \"/items?$skip=10\"\r\n    }\r\n\r\n    GET /items?$skip=10\r\n    =&gt; {\r\n    \"items\": [11..20],\r\n    \"@nextLink\": \"/items?$skip=20\"\r\n    }\r\n</pre>\r\n</p>                       \r\n<p>\r\n    Example 2: Server driven pagination where client specified a max page size lower then the server's default page size:\r\n<pre>\r\n    GET /items?$maxpagesize=9\r\n    =&gt; {\r\n    \"items\": [1..9],\r\n    \"@nextLink\": \"/items?$skip=9&amp;$maxpagesize=9\"\r\n    }\r\n    GET /items?$skip=9&amp;$maxpagesize=9\r\n    =&gt; {\r\n    \"items\": [10..18],\r\n    \"@nextLink\": \"/items?$skip=18&amp;$maxpagesize=9\"\r\n    }\r\n</pre>\r\n</p>        \r\n",
+        "operationId": "Get all catalog items",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "description": "Format - int32.",
+            "type": "integer"
+          },
+          {
+            "name": "$skip",
+            "in": "query",
+            "description": "Format - int32.",
+            "type": "integer"
+          },
+          {
+            "name": "$maxpagesize",
+            "in": "query",
+            "description": "Format - int32.",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CatalogItemsPage"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/usage": {
+      "post": {
+        "description": "<p>\r\nOnce you have created a model and uploaded catalog data, you should upload usage data to it before you can train the system and create a build.\r\nThe usage data describes all the transactions that your customers have made in the past; in essence the interactions between users and items.\r\n</p>\r\n<p>\r\n    It needs to be passed as the content of body request and it should follow the format below:<br />\r\n    &lt;User Id&gt;,&lt;Item Id&gt;,&lt;Time&gt;,[&lt;Event type&gt;]\r\n<p>\r\n    <b>\r\n        Additional details\r\n    </b><br />\r\n</p>\r\n<p>\r\n    <table border=\"1\" cellpadding=\"10\" cellspacing=\"10\" style=\"border-collapse:collapse;\">\r\n        <tr>\r\n            <td>Name </td>\r\n            <td>Mandatory</td>\r\n            <td>Type</td>\r\n            <td>Description</td>\r\n        </tr>\r\n        <tr>\r\n            <td>User Id</td>\r\n            <td>Yes</td>\r\n            <td>[A-z], [a-z], [0-9], [_] &#40;Underscore&#41;, [-] &#40;Dash&#41;<br> Max length: 255</td>\r\n            <td>Unique identifier of a user.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Item Id</td>\r\n            <td>Yes</td>\r\n            <td>[A-z], [a-z], [0-9], [_] &#40;Underscore&#41;, [-] &#40;Dash&#41;<br> Max length: 50</td>\r\n            <td>Unique identifier of an item.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Time</td>\r\n            <td>Yes</td>\r\n            <td>Date in format: YYYY/MM/DDTHH:MM:SS<br /> (e.g. 2013/06/20T10:00:00)</td>\r\n            <td>Transaction time.</td>\r\n        </tr>\r\n        <tr>\r\n            <td>Event</td>\r\n            <td>No</td>\r\n            <td>\r\n                One of the following: <br />\r\n                - Click<br />\r\n                - RecommendationClick<br />\r\n                - AddShopCart<br />\r\n                - RemoveShopCart<br />\r\n                - Purchase<br />\r\n            </td>\r\n            <td>The type of transaction.</td>\r\n        </tr>\r\n    </table>\r\n    <br />\r\n    <br />\r\n    <b>Example</b>\r\n    <br />\r\n    168064,6485200,2013/06/20T10:00:00, Purchase\r\n    <br />\r\n    263325,6485200,2013/06/20T10:00:00, Purchase\r\n    <br />\r\n    190485,6485200,2013/06/20T10:00:00, Click\r\n    <br />\r\n    225087,6485936,2013/06/20T10:00:00, Purchase\r\n    <br />\r\n    ...\r\n\r\n<p>\r\n    More information on what data to collect can be found at the\r\n    <a href=\"https://azure.microsoft.com/en-us/documentation/articles/cognitive-services-recommendations-collecting-data/\">Collecting Training Data</a> document.\r\n</p>\r\n<p>\r\n<p>\r\n    <b>Notes </b>\r\n    <br />\r\n    You need to upload a catalog file before you start adding usage data to your model. Only items in the catalog file will be used during the training phase. All other items will be ignored.\r\n    <br/>\r\n    The maximum size of data that can be sent in POST call for this API is 200MB. If you need to upload more than 200MB of usage data, you may call this API several times.\r\n    <br />\r\n    The maximum number of usage points that are kept is ~5,000,000. The oldest will be deleted if new ones will be uploaded or reported.\r\n</p>",
+        "operationId": "Upload usage file",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "usageDisplayName",
+            "in": "query",
+            "description": "Display name of the usage data. e.g. \"UsageFile1\"\r\n            Only letters(A-Z, a-z), numbers(0-9), hyphens(-) and underscore(_) are allowed. Max length: 50",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UsageImportStats"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "delete": {
+        "description": "Deletes all usage file of a model",
+        "operationId": "Delete all usage files",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "get": {
+        "description": "Lists all the usage events files of a model",
+        "operationId": "List usage files",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UsageInfoArray"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/builds/{buildId}/metrics": {
+      "get": {
+        "description": "Return metrics such as precision and diversity for a given build. \r\n\r\nAs part of the precision and diversity metrics evaluation, the system finds a sample of users, and then the transactions \r\nfor those users are split into two groups: the training dataset and the test dataset. In order to get metrics, you should have \r\nset the enableModelingInsights parameter to true at build time.\r\n\r\n<p>\r\n    Learn more about build metrics on the offline evaluation section of the <a href=\"https://azure.microsoft.com/en-us/documentation/articles/cognitive-services-recommendations-buildtypes/\">Build Types and Model Quality</a> documentation.\r\n</p>",
+        "operationId": "Get build metrics",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "buildId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the build",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BuildMetrics"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/rules": {
+      "post": {
+        "description": "<p>\r\n    Adds a new business rule for a model.     These are the types of rules supported: <br />\r\n</p>\r\n<p>\r\n    <b>BlockList</b> - BlockList enables you to provide a list of items that you do not want to return in the recommendation results.\r\n        <br />\r\n        <b>FeatureBlockList</b> - Feature BlockList enables you to block items based on the values of its features. Do not send more than 1000 items in a single blocklist rule or your call may timeout. If you need to block more than 1000 items, you can make several blocklist calls.<br />\r\n    <b>Upsale</b> - Upsale enables you to enforce items to return in the recommendation results.<br/>\r\n        <b>WhiteList</b> - White List enables you to only suggest recommendations from a list of items.\r\n        <br />\r\n        <b>FeatureWhiteList</b> - Feature White List enables you to only recommend items that have specific feature values.\r\n        <br />\r\n        <b>PerSeedBlockList</b> - Per Seed Block List enables you to provide per item a list of items that cannot be returned as recommendation results.\r\n        <br />\r\n</p>\r\n\r\n\r\n<p>\r\n    <b>Sample request bodies</b>\r\n</p>\r\nBlockList rule:\r\n<PRE>\r\n    {\r\n      \"type\": \"blocklist\",\r\n      \"parameters\": {\r\n        \"blockList\": { \"itemIds\": [\"2406E770-QWR\",\"3906E110-769\"] }\r\n      }\r\n    }\r\n</PRE>\r\n\r\nFeatureBlockList rule:\r\n<PRE>\r\n    {\r\n      \"type\": \"featureBlockList\",\r\n      \"parameters\": {\r\n        \"featureBlockList\": { \"name\": \"Movie_category\", \"Values\":[\"Adult\",\"Drama\"] }\r\n      } \r\n    }\r\n</PRE>\r\n\r\nUpsale rule:\r\n<PRE>\r\n    {\r\n      \"type\": \"upsale\",\r\n      \"parameters\": {\r\n        \"upsale\": {\"ItemsToUpsale\":[\"2406E770-769C-4189-89DE-1C9283F93A96\"],\"NumberOfItemsToUpsale\":5}\r\n      } \r\n    }\r\n</PRE>\r\n\r\n\r\nWhitelist rule:\r\n<PRE>\r\n    {\r\n      \"type\": \"whitelist\",\r\n      \"parameters\": {\r\n        \"whitelist\": {\"itemIds\":[\"2406E770-QWR\",\"3906E110-769\"]}\r\n      } \r\n    }\r\n</PRE>\r\n\r\n\r\nFeatureWhiteList rule:\r\n<PRE>\r\n    {\r\n      \"type\": \"featureWhiteList\",\r\n      \"parameters\": {\r\n        \"featureWhiteList\": {\"Name\":\"Movie_rating\",\"Values\":[\"PG13\", \"PG\"]}\r\n      } \r\n    }\r\n</PRE>\r\n\r\n\r\nPerSeedBlockList rule:\r\n<PRE>\r\n    {\r\n      \"type\": \"perSeedBlockList\",\r\n      \"parameters\": {\r\n        \"perSeedBlockList\": {\"SeedItems\":[\"9949\"], \"ItemsToExclude\":[\"9862\",\"8158\",\"8244\"]}\r\n      } \r\n    }\r\n</PRE>\r\n\r\n",
+        "operationId": "Create business rule",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ruleRequestInfo",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RuleRequestInfo"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/x-www-form-urlencoded",
+          "application/xml",
+          "text/xml"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/RuleInfo"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "delete": {
+        "description": "Delete all rules",
+        "operationId": "Delete all business rules",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "The model id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "get": {
+        "description": "Retrieves the details of all rules for a model.",
+        "operationId": "Get all business rules",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RuleInfoList"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/rules/{ruleId}": {
+      "delete": {
+        "description": "Deletes a rule by ID",
+        "operationId": "Delete business rule",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the rule",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the rule",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "get": {
+        "description": "Retrieves information about a rule",
+        "operationId": "Get business rule",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the rule",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RuleInfo"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/catalog/items": {
+      "get": {
+        "description": "Search for catalog items.\r\n\r\nRetrieves a list of catalog items using the ids provided or items that contain the given search term.\r\nThe 'ids' and 'searchTerm' parameters cannot be used together. If both are provided, only the searchTerm parameter will be ignored.\r\nIf provided, the searchTerm parameters must be at least 3 characters long.",
+        "operationId": "Get specific catalog items by search term",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "description": "The ids of the catalog items to retrieve",
+            "type": "string"
+          },
+          {
+            "name": "searchTerm",
+            "in": "query",
+            "description": "The search term to filter by catalog items by",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CatalogItemsPage"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/usage/events": {
+      "post": {
+        "description": "Upload a usage event to a model. Set buildId to \"-1\", to default to the Active Build of the model.",
+        "operationId": "Upload usage event",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "usageEvent",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UsageEvent"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/usage/{fileId}": {
+      "delete": {
+        "description": "Deletes a specific usage file",
+        "operationId": "Delete usage file",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "description": "The usage file id to delete",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      },
+      "get": {
+        "description": "Download a specific usage file",
+        "operationId": "Download usage file",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "description": "The usage file id to download",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Models{modelId}Usage{fileId}Get200ApplicationJsonResponse"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/features": {
+      "get": {
+        "description": "Get Feature info from given modelId and rankBuildId",
+        "operationId": "Get model features",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "rankBuildId",
+            "in": "query",
+            "description": "Format - int64. The buildId used for the ranking request.",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/FeatureInfoResponse"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/batchjobs/{jobId}": {
+      "get": {
+        "description": "Get information about an ongoing batch jobs.\r\n",
+        "operationId": "Get all batch jobs",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BatchJobInfoList"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/batchjobs": {
+      "post": {
+        "description": "Submits a Batch Execution job. \r\n<p>\r\nThere are situations when you need to get recommendations for more than one item at a time. For instance, you may be interested in creating a recommendations cache or even doing an analysis on the types of recommendations you are getting.\r\n</p>\r\n<p>\r\nBatch scoring operations are asynchronous operations.  This API allows you to kick start the scoring operation.  Once the operation is started, you need to wait for it to complete before you can gather the results of the operation.\r\nThe response from the creation call with contain a header called <i>Operation-Location</i>. You can use this operation location to query the status of the batch processing.\r\nSee the \"Get operation status\" API.\r\n</p>\r\n<p>\r\n    <b>Sample request body</b>\r\n</p>\r\n<pre>\r\n    {\r\n      \"input\": {\r\n        \"authenticationType\": \"PublicOrSas\",\r\n        \"baseLocation\": \"https://mystorage1.blob.core.windows.net/\",\r\n        \"relativeLocation\": \"container1/batchInput.json\",\r\n        \"sasBlobToken\": \"?sv=2015-07_restofToken_...&sp=rw\"\r\n      },\r\n      \"output\": {\r\n        \"authenticationType\": \"PublicOrSas\",\r\n        \"baseLocation\": \"https://mystorage1.blob.core.windows.net/\",\r\n        \"relativeLocation\": \"container1/batchOutput.json \",\r\n        \"sasBlobToken\": \"?sv=2015-07_restofToken_...4Z&sp=rw\"\r\n      },\r\n      \"error\": {\r\n        \"authenticationType\": \"PublicOrSas\",\r\n        \"baseLocation\": \"https://mystorage1.blob.core.windows.net/\",\r\n        \"relativeLocation\": \"container1/errors.txt\",\r\n        \"sasBlobToken\": \"?sv=2015-07_restofToken_...4Z&sp=rw\"\r\n      },\r\n      \"job\": {\r\n        \"apiName\": \"ItemRecommend\",\r\n        \"modelId\": \"9ac12a0a-1add-4bdc-bf42-c6517942b3a6\",\r\n        \"buildId\": 1015703,\r\n        \"numberOfResults\": 10,\r\n        \"includeMetadata\": true,\r\n        \"minimalScore\": 0.0\r\n      }\r\n    }\r\n</pre>\r\n<p>\r\n    <b>  Limitations</b><br />\r\n    Currently only one scoring job is allowed at a time.<br />\r\n    A batch job input file cannot be more than 2MB.<br />\r\n</p>",
+        "operationId": "Start batch job",
+        "parameters": [
+          {
+            "name": "batchJobsRequestInfo",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/BatchJobsRequestInfo"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded"
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/builds/{buildId}/datastatistics": {
+      "get": {
+        "description": "Retrieves the statistics about the data used to create a given build of the model. Currently different build types may return different statistics.",
+        "operationId": "Get build data statistics",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "buildId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the build",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BuildDataStatistics"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/builds/{buildId}/usagestatistics": {
+      "get": {
+        "description": "Gets statistics about the user interactions (usage) during a given time interval for a particular build. This can be helpful in order to calculate conversion rates.",
+        "operationId": "Get usage statistics for a build",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "buildId",
+            "in": "path",
+            "description": "Format - int64. Unique identifier of the build",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "description": "It specifies the start and end date in ISO 8601 format. For instance: \"2007-03-01T13:00:00Z/2008-05-11T15:30:00Z\"",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "eventTypes",
+            "in": "query",
+            "description": "Comma separated list of \"EventTypes\". Empty string or null to get all events",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UsageStatisticsResponse"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    },
+    "/models/{modelId}/usagestatistics": {
+      "get": {
+        "description": "Gets statistics about the user interactions (usage) during a given time interval for a particular model. This can be helpful in order to calculate conversion rates.",
+        "operationId": "Get usage statistics for a model",
+        "parameters": [
+          {
+            "name": "modelId",
+            "in": "path",
+            "description": "Unique identifier of the model",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "description": "It specifies the start and end date in ISO 8601 format. For instance: \"2007-03-01T13:00:00Z/2008-05-11T15:30:00Z\"",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "eventTypes",
+            "in": "query",
+            "description": "Comma separated list of \"EventTypes\". Empty string or null to get all events",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ModelUsageStatisticsResponse"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "BatchJobsRequestInfo": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/StorageBlobInfo",
+          "description": "The input storage blob info"
+        },
+        "output": {
+          "$ref": "#/definitions/StorageBlobInfo",
+          "description": "The output storage blob info"
+        },
+        "error": {
+          "$ref": "#/definitions/StorageBlobInfo",
+          "description": "The error storage blob info"
+        },
+        "job": {
+          "$ref": "#/definitions/JobInfo",
+          "description": "The job info"
+        }
+      }
+    },
+    "StorageBlobInfo": {
+      "type": "object",
+      "properties": {
+        "authenticationType": {
+          "description": "Authentication Type\r\n            value \"PublicOrSas\"",
+          "type": "string"
+        },
+        "baseLocation": {
+          "description": "Base Location\r\n            ex: \"https://{storage name}.blob.core.windows.net/\"",
+          "type": "string"
+        },
+        "relativeLocation": {
+          "description": "The relative location, including the container name",
+          "type": "string"
+        },
+        "sasBlobToken": {
+          "description": "The sasToken to access the file",
+          "type": "string"
+        }
+      }
+    },
+    "JobInfo": {
+      "type": "object",
+      "properties": {
+        "apiName": {
+          "description": "Api Name\r\n            The ApiName is internally an enum (see SupportedApis in BatchScoringManager)\r\n            The valid values should be: ItemRecommend, UserRecommend, ItemFbtRecommend",
+          "type": "string"
+        },
+        "modelId": {
+          "description": "The Model Id\r\n            ModelId is the model id which batch scoring is requested to",
+          "type": "string"
+        },
+        "buildId": {
+          "format": "int64",
+          "description": "The build Id\r\n            BuildId is the build id which batch scoring is requested to\r\n            It is optional. If it is not provided, the active build id will be used",
+          "type": "integer"
+        },
+        "numberOfResults": {
+          "format": "int32",
+          "description": "Number of recommendations\r\n            It indicates the number of results (recommended items) each request should return\r\n            It is optional. The default value is 10",
+          "type": "integer"
+        },
+        "includeMetadata": {
+          "description": "Include Metadata\r\n            it indicates whether the result should include metadata or not\r\n            It is optional. The default value is false",
+          "type": "boolean"
+        },
+        "minimalScore": {
+          "format": "double",
+          "description": "The minimum score. Currently only supported for FbtBuilds\r\n            It indicates the minimal score to return\r\n            It is optional. The default value is 0.1",
+          "type": "number"
+        }
+      }
+    },
+    "Object": {
+      "type": "object",
+      "properties": {}
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "$ref": "#/definitions/Error"
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "Unique error code identifying the error",
+          "type": "string"
+        },
+        "message": {
+          "description": "Error message",
+          "type": "string"
+        },
+        "innerError": {
+          "$ref": "#/definitions/InternalError",
+          "description": "Error details"
+        }
+      }
+    },
+    "InternalError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "innerError": {
+          "$ref": "#/definitions/InternalError"
+        }
+      }
+    },
+    "BatchJobInfoList": {
+      "type": "object",
+      "properties": {
+        "batchJobs": {
+          "description": "List of batch jobs for the user",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BatchJobInfo"
+          }
+        }
+      }
+    },
+    "BatchJobInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Unique batch identifier",
+          "type": "string"
+        },
+        "requestinfo": {
+          "$ref": "#/definitions/BatchJobsRequestInfo",
+          "description": "Description of the batch request"
+        },
+        "status": {
+          "description": "Status of the batch job (it is actually the job status: Registered, Ready, InProgress, Canceling, Canceled, Succeeded, Failed)",
+          "type": "string"
+        }
+      }
+    },
+    "BuildMetrics": {
+      "type": "object",
+      "properties": {
+        "precisionItemRecommend": {
+          "$ref": "#/definitions/PrecisionItemRecommend",
+          "description": "Precision metrics for the build based on single item recommendations."
+        },
+        "precisionUserRecommend": {
+          "$ref": "#/definitions/PrecisionUserRecommend",
+          "description": "Precision metrics for the build based on user's history recommendations."
+        },
+        "diversityItemRecommend": {
+          "$ref": "#/definitions/DiversityItemRecommend",
+          "description": "Diversity metrics for the build based on single item recommendations."
+        },
+        "diversityUserRecommend": {
+          "$ref": "#/definitions/DiversityUserRecommend",
+          "description": "Diversity metrics for the build based on user's history recommendations."
+        }
+      }
+    },
+    "PrecisionItemRecommend": {
+      "type": "object",
+      "properties": {
+        "precisionMetrics": {
+          "description": "Precision metrics that are computed for the test/train dataset.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrecisionMetric"
+          }
+        },
+        "error": {
+          "description": "Error message to indicate reason in failure cases.",
+          "type": "string"
+        }
+      }
+    },
+    "PrecisionUserRecommend": {
+      "type": "object",
+      "properties": {
+        "precisionMetrics": {
+          "description": "Precision metrics that are computed for the test/train dataset.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrecisionMetric"
+          }
+        },
+        "error": {
+          "description": "Error message to indicate reason in failure cases.",
+          "type": "string"
+        }
+      }
+    },
+    "DiversityItemRecommend": {
+      "type": "object",
+      "properties": {
+        "percentileBuckets": {
+          "description": "Each percentile bucket is represented by a span (min/max values \r\n            that range between 0 and 100). The items close to 100 are the \r\n            most popular items, and the items close to 0 are the least popular.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PercentileBucket"
+          }
+        },
+        "totalItemsRecommended": {
+          "format": "int32",
+          "description": "The total number of items recommended. (some may be duplicates)",
+          "type": "integer"
+        },
+        "uniqueItemsRecommended": {
+          "format": "int32",
+          "description": "Number of distinct items that were returned for evaluation.",
+          "type": "integer"
+        },
+        "uniqueItemsInTrainSet": {
+          "format": "int32",
+          "description": "Number of distinct items in the train dataset.",
+          "type": "integer"
+        },
+        "error": {
+          "description": "Error message to indicate reason in failure cases.",
+          "type": "string"
+        }
+      }
+    },
+    "DiversityUserRecommend": {
+      "type": "object",
+      "properties": {
+        "percentileBuckets": {
+          "description": "Each percentile bucket is represented by a span (min/max values \r\n            that range between 0 and 100). The items close to 100 are the \r\n            most popular items, and the items close to 0 are the least popular.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PercentileBucket"
+          }
+        },
+        "totalItemsRecommended": {
+          "format": "int32",
+          "description": "The total number of items recommended. (some may be duplicates)",
+          "type": "integer"
+        },
+        "uniqueItemsRecommended": {
+          "format": "int32",
+          "description": "Number of distinct items that were returned for evaluation.",
+          "type": "integer"
+        },
+        "uniqueItemsInTrainSet": {
+          "format": "int32",
+          "description": "Number of distinct items in the train dataset.",
+          "type": "integer"
+        },
+        "error": {
+          "description": "Error message to indicate reason in failure cases.",
+          "type": "string"
+        }
+      }
+    },
+    "PrecisionMetric": {
+      "type": "object",
+      "properties": {
+        "k": {
+          "format": "int32",
+          "description": "The value K used to calculate the metric values.",
+          "type": "integer"
+        },
+        "percentage": {
+          "format": "double",
+          "description": "Precision@K percentage.",
+          "type": "number"
+        },
+        "usersInTest": {
+          "format": "int32",
+          "description": "The total number of users in the test dataset.",
+          "type": "integer"
+        },
+        "usersConsidered": {
+          "format": "int32",
+          "description": "A user is only considered if the system recommended at least K items based on the model generated using the training dataset.",
+          "type": "integer"
+        },
+        "usersNotConsidered": {
+          "format": "int32",
+          "description": "Any users not considered; the users that did not receive at least K recommended items.",
+          "type": "integer"
+        }
+      }
+    },
+    "PercentileBucket": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "format": "int32",
+          "description": "The beginning percentile of the popularity bucket (inclusive).",
+          "type": "integer"
+        },
+        "max": {
+          "format": "int32",
+          "description": "The ending percentile of the popularity bucket (exclusive except 100 \r\n            which is inclusive).",
+          "type": "integer"
+        },
+        "percentage": {
+          "format": "double",
+          "description": "The fraction of all recommended users that belong to the specified popularity bucket.",
+          "type": "number"
+        }
+      }
+    },
+    "BuildRequestInfo": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Build description",
+          "type": "string"
+        },
+        "buildType": {
+          "description": "Type of build: Ranking, Recommendation or Fbt",
+          "type": "string"
+        },
+        "buildParameters": {
+          "$ref": "#/definitions/BuildParameters",
+          "description": "Parameters for build"
+        }
+      }
+    },
+    "BuildParameters": {
+      "type": "object",
+      "properties": {
+        "ranking": {
+          "$ref": "#/definitions/RankingBuildParameters",
+          "description": "Build parameters for build of type \"Ranking\""
+        },
+        "recommendation": {
+          "$ref": "#/definitions/RecommendationBuildParameters",
+          "description": "Build parameters for build of type \"Recommendation\""
+        },
+        "fbt": {
+          "$ref": "#/definitions/FbtBuildParameters",
+          "description": "Build parameters for build of type \"Fbt\""
+        }
+      }
+    },
+    "RankingBuildParameters": {
+      "type": "object",
+      "properties": {
+        "numberOfModelIterations": {
+          "format": "int32",
+          "description": "The number of iterations the model performs. \r\n            The higher the number, the better accuracy, but compute time will be higher.",
+          "type": "integer"
+        },
+        "numberOfModelDimensions": {
+          "format": "int32",
+          "description": "The number of dimensions relates to the number of 'features' the model will try to find within your data. \r\n            Increasing the number of dimensions will allow better fine-tuning of the results into smaller clusters. \r\n            However, too many dimensions will prevent the model from finding correlations between items.",
+          "type": "integer"
+        },
+        "itemCutOffLowerBound": {
+          "format": "int32",
+          "description": "Defines the item lower bound for usage condenser.",
+          "type": "integer"
+        },
+        "itemCutOffUpperBound": {
+          "format": "int32",
+          "description": "Defines the item upper bound for usage condenser.",
+          "type": "integer"
+        },
+        "userCutOffLowerBound": {
+          "format": "int32",
+          "description": "Defines the user lower bound for usage condenser.",
+          "type": "integer"
+        },
+        "userCutOffUpperBound": {
+          "format": "int32",
+          "description": "Defines the user upper bound for usage condenser.",
+          "type": "integer"
+        }
+      }
+    },
+    "RecommendationBuildParameters": {
+      "type": "object",
+      "properties": {
+        "numberOfModelIterations": {
+          "format": "int32",
+          "description": "The number of iterations the model performs. \r\n            The higher the number, the better accuracy, but compute time will be higher.",
+          "type": "integer"
+        },
+        "numberOfModelDimensions": {
+          "format": "int32",
+          "description": "The number of dimensions relates to the number of 'features' the model will try to find within your data. \r\n            Increasing the number of dimensions will allow better fine-tuning of the results into smaller clusters. \r\n            However, too many dimensions will prevent the model from finding correlations between items.",
+          "type": "integer"
+        },
+        "itemCutOffLowerBound": {
+          "format": "int32",
+          "description": "Defines the item lower bound for usage condenser.",
+          "type": "integer"
+        },
+        "itemCutOffUpperBound": {
+          "format": "int32",
+          "description": "Defines the item upper bound for usage condenser.",
+          "type": "integer"
+        },
+        "userCutOffLowerBound": {
+          "format": "int32",
+          "description": "Defines the user lower bound for usage condenser.",
+          "type": "integer"
+        },
+        "userCutOffUpperBound": {
+          "format": "int32",
+          "description": "Defines the user upper bound for usage condenser.",
+          "type": "integer"
+        },
+        "enableModelingInsights": {
+          "description": "Enable or disable metrics computation for the model.",
+          "type": "boolean"
+        },
+        "splitterStrategy": {
+          "description": "Defines the splitter strategy to be used by the build.\r\n            RandomSplitter splits the usage data in train and test sets based on the given\r\n            randomSplitterParameters value.\r\n            LastEventSplitter splits the usage data in train and test sets based on the last\r\n            transaction for a each user.",
+          "type": "string"
+        },
+        "randomSplitterParameters": {
+          "$ref": "#/definitions/RandomSplitterParameters",
+          "description": "Specifies the parameters to be used for random splitter."
+        },
+        "useFeaturesInModel": {
+          "description": "Indicates if features can be used in order to enhance the recommendation model.",
+          "type": "boolean"
+        },
+        "modelingFeatureList": {
+          "description": "Comma-separated list of feature names to be used during build.",
+          "type": "string"
+        },
+        "allowColdItemPlacement": {
+          "description": "Indicates if the recommendation should also push cold items via feature similarity.",
+          "type": "boolean"
+        },
+        "enableFeatureCorrelation": {
+          "description": "Indicates if features can be used in reasoning.",
+          "type": "boolean"
+        },
+        "reasoningFeatureList": {
+          "description": "Comma-separated list of feature names to be used for reasoning sentences (e.g. recommendation explanations).",
+          "type": "string"
+        },
+        "enableU2I": {
+          "description": "Allow the personalized recommendation a.k.a. U2I (user to item recommendations).",
+          "type": "boolean"
+        }
+      }
+    },
+    "FbtBuildParameters": {
+      "type": "object",
+      "properties": {
+        "supportThreshold": {
+          "format": "int32",
+          "description": "Number of co-occurrences of items to be considered for modeling.",
+          "type": "integer"
+        },
+        "maxItemSetSize": {
+          "format": "int32",
+          "description": "Bound for number of items in a frequent set.",
+          "type": "integer"
+        },
+        "minimalScore": {
+          "format": "double",
+          "description": "Minimal score that a frequent set should have in order to be included in the returned results.",
+          "type": "number"
+        },
+        "similarityFunction": {
+          "description": "Defines the similarity function to be used by the build. \r\n            Lift favors serendipity, Co-occurrence favors predictability, and Jaccard is a nice compromise between the two.",
+          "type": "string"
+        },
+        "enableModelingInsights": {
+          "description": "Enable or disable metrics computation for the model.",
+          "type": "boolean"
+        },
+        "splitterStrategy": {
+          "description": "Defines the splitter strategy to be used by the build.\r\n            RandomSplitter splits the usage data in train and test sets based on the given\r\n            randomSplitterParameters value.\r\n            LastEventSplitter splits the usage data in train and test sets based on the last\r\n            transaction for a each user.",
+          "type": "string"
+        },
+        "randomSplitterParameters": {
+          "$ref": "#/definitions/RandomSplitterParameters",
+          "description": "Specifies the parameters to be used for random splitter."
+        }
+      }
+    },
+    "RandomSplitterParameters": {
+      "type": "object",
+      "properties": {
+        "testPercent": {
+          "format": "int32",
+          "description": "The percentage of data from the usage file that will be put in the test set\r\n            during splitting.",
+          "type": "integer"
+        },
+        "randomSeed": {
+          "format": "int32",
+          "description": "Number used to calculate the startig value of random sequence based on which\r\n            test set data is selected.",
+          "type": "integer"
+        }
+      }
+    },
+    "BuildModelResponse": {
+      "type": "object",
+      "properties": {
+        "buildId": {
+          "format": "int64",
+          "description": "Unique build identifier",
+          "type": "integer"
+        }
+      }
+    },
+    "BuildInfoList": {
+      "type": "object",
+      "properties": {
+        "builds": {
+          "description": "List of build details for a model",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BuildInfo"
+          }
+        }
+      }
+    },
+    "BuildInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int64",
+          "description": "Unique build identifier",
+          "type": "integer"
+        },
+        "description": {
+          "description": "Description provided by user (BuildRequestInfo.Description)",
+          "type": "string"
+        },
+        "type": {
+          "description": "Type of build: Recommendation - 1, Ranking - 2, Fbt - 3",
+          "type": "string"
+        },
+        "modelName": {
+          "description": "Name of the Model associated this build",
+          "type": "string"
+        },
+        "modelId": {
+          "description": "ID of the Model associated this build",
+          "type": "string"
+        },
+        "status": {
+          "description": "Status of the build: NotStarted, Running, Cancelling, Cancelled, Succeeded, Failed",
+          "type": "string"
+        },
+        "statusMessage": {
+          "description": "Details if available about build status",
+          "type": "string"
+        },
+        "startDateTime": {
+          "description": "Build start time",
+          "type": "string"
+        },
+        "endDateTime": {
+          "description": "Build end time",
+          "type": "string"
+        },
+        "modifiedDateTime": {
+          "description": "Last build modified time",
+          "type": "string"
+        },
+        "buildParameters": {
+          "$ref": "#/definitions/BuildParameters",
+          "description": "Parameters for build"
+        }
+      }
+    },
+    "BuildDataStatistics": {
+      "type": "object",
+      "properties": {
+        "numberOfCatalogItems": {
+          "format": "int32",
+          "description": "Number of items in the catalog.",
+          "type": "integer"
+        },
+        "numberOfCatalogItemsInUsage": {
+          "format": "int32",
+          "description": "Number of unique items from usage data (which are present in catalog).",
+          "type": "integer"
+        },
+        "numberOfUsers": {
+          "format": "int32",
+          "description": "Number of unique users in usage data before any pruning.",
+          "type": "integer"
+        },
+        "numberOfUsageRecords": {
+          "format": "int32",
+          "description": "Total number of usage points before any pruning, and after removing duplicate user id / item id records.",
+          "type": "integer"
+        },
+        "catalogCoverage": {
+          "format": "double",
+          "description": "NumberOfCatalogItemsForModeling/ NumberOfCatalogItems\r\n            This property indicates what part of the catalog can be modelled with usage data. The rest of the items will need content-based features.",
+          "type": "number"
+        }
+      }
+    },
+    "CatalogImportStats": {
+      "type": "object",
+      "properties": {
+        "processedLineCount": {
+          "format": "int32",
+          "description": "Number of total processed lines in uploaded catalog file",
+          "type": "integer"
+        },
+        "errorLineCount": {
+          "format": "int32",
+          "description": "Number of total error lines in uploaded catalog file",
+          "type": "integer"
+        },
+        "importedLineCount": {
+          "format": "int32",
+          "description": "Number of successfully imported catalog items from uploaded catalog file",
+          "type": "integer"
+        },
+        "errorSummary": {
+          "description": "Details of errors during catalog import",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ImportErrorStats"
+          }
+        }
+      }
+    },
+    "ImportErrorStats": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "description": "Error code for error catalog lines",
+          "type": "string"
+        },
+        "errorCodeCount": {
+          "format": "int32",
+          "description": "Count of catalog lines with specified error code",
+          "type": "integer"
+        }
+      }
+    },
+    "CatalogItemsPage": {
+      "description": "A data object representing a paginated list of catalog items, used as the return type in API4's catalog API",
+      "type": "object",
+      "properties": {
+        "value": {
+          "description": "Gets or sets the catalog items in this page",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ICatalogLine"
+          }
+        },
+        "@nextLink": {
+          "description": "Gets or sets a link to the next page of catalog items, if available",
+          "type": "string"
+        }
+      }
+    },
+    "ICatalogLine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "readOnly": true
+        },
+        "category": {
+          "type": "string",
+          "readOnly": true
+        },
+        "description": {
+          "type": "string",
+          "readOnly": true
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemFeature"
+          },
+          "readOnly": true
+        },
+        "metadata": {
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "ItemFeature": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "FeatureInfoResponse": {
+      "type": "object",
+      "properties": {
+        "rankBuildId": {
+          "format": "int64",
+          "description": "RankBuildId",
+          "type": "integer"
+        },
+        "rankBuildDate": {
+          "format": "date-time",
+          "description": "last update date of the rank of this feature or score freshness : in case no rank exists, the historical date is returned {System.DateTime.MinValue}",
+          "type": "string"
+        },
+        "features": {
+          "description": "List of feature details for a model",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FeatureInfo"
+          }
+        }
+      }
+    },
+    "FeatureInfo": {
+      "type": "object",
+      "properties": {
+        "featureName": {
+          "description": "The feature name",
+          "type": "string"
+        },
+        "rank": {
+          "format": "float",
+          "description": "The rank of this feature, -1 if no rank was assigned yet.",
+          "type": "number"
+        }
+      }
+    },
+    "RecommendedItemSetInfoList": {
+      "description": "Result of FBT, I2I or U2I recommendation scoring requests.",
+      "type": "object",
+      "properties": {
+        "recommendedItems": {
+          "description": "Set of recommended items",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RecommendedItemSetInfo"
+          }
+        }
+      }
+    },
+    "RecommendedItemSetInfo": {
+      "description": "Holds a recommendation result, which is a set of recommended items with reasoning and rating/score.",
+      "type": "object",
+      "properties": {
+        "items": {
+          "description": "List of recommended items",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RecommendedItemInfo"
+          }
+        },
+        "rating": {
+          "format": "double",
+          "description": "Rating/score for this recommendation",
+          "type": "number"
+        },
+        "reasoning": {
+          "description": "Reasoning/explanation about recommended items.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "RecommendedItemInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Recommmended item ID",
+          "type": "string"
+        },
+        "name": {
+          "description": "Recommended item name",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Optional recommended item metadata",
+          "type": "string"
+        }
+      }
+    },
+    "ModelRequestInfo": {
+      "type": "object",
+      "properties": {
+        "modelName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "ModelInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Unique identifier for Model",
+          "type": "string"
+        },
+        "name": {
+          "description": "Model name, limit 20 characters",
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional model description",
+          "type": "string"
+        },
+        "createdDateTime": {
+          "description": "Model creation date time",
+          "type": "string"
+        },
+        "activeBuildId": {
+          "format": "int64",
+          "description": "Active build ID for this model",
+          "type": "integer"
+        },
+        "catalogDisplayName": {
+          "description": "Active build ID for this model",
+          "type": "string"
+        }
+      }
+    },
+    "ModelInfoList": {
+      "type": "object",
+      "properties": {
+        "models": {
+          "description": "List of Models for a given user",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ModelInfo"
+          }
+        }
+      }
+    },
+    "UpdateModelRequestInfo": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Model description",
+          "type": "string"
+        },
+        "activeBuildId": {
+          "format": "int64",
+          "description": "Model active build ID",
+          "type": "integer"
+        }
+      }
+    },
+    "OperationInfo[BuildInfo]": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Type of operation, currently 'BuildModel' is the only supported value",
+          "type": "string"
+        },
+        "status": {
+          "description": "Description for operation status. \r\n            e.g. For 'BuildModel' operation type, this can be one of: NotStarted, Running, Cancelling, Cancelled, Succeeded, Failed.",
+          "type": "string"
+        },
+        "createdDateTime": {
+          "description": "Operation creation time",
+          "type": "string"
+        },
+        "lastActionDateTime": {
+          "description": "Operation last updated time",
+          "type": "string"
+        },
+        "percentComplete": {
+          "format": "int32",
+          "description": "Operation progress",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Description for operation.",
+          "type": "string"
+        },
+        "resourceLocation": {
+          "description": "A unique resource location for this operation",
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/BuildInfo",
+          "description": "An object reprsenting the final result of the operation"
+        }
+      }
+    },
+    "RuleRequestInfo": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Type of rule",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/definitions/RuleParameters",
+          "description": "Parameters for rule"
+        }
+      }
+    },
+    "RuleParameters": {
+      "type": "object",
+      "properties": {
+        "blockList": {
+          "$ref": "#/definitions/BlockListParameters"
+        },
+        "whiteList": {
+          "$ref": "#/definitions/WhiteListParameters"
+        },
+        "upsale": {
+          "$ref": "#/definitions/UpsaleParameters"
+        },
+        "perSeedBlockList": {
+          "$ref": "#/definitions/PerSeedBlockListParameters"
+        },
+        "featureBlockList": {
+          "$ref": "#/definitions/FeatureBlockListParameters"
+        },
+        "featureWhiteList": {
+          "$ref": "#/definitions/FeatureWhiteListParameters"
+        }
+      }
+    },
+    "BlockListParameters": {
+      "type": "object",
+      "properties": {
+        "itemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "WhiteListParameters": {
+      "type": "object",
+      "properties": {
+        "itemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "UpsaleParameters": {
+      "type": "object",
+      "properties": {
+        "itemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "numberOfItemsToUpsale": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "PerSeedBlockListParameters": {
+      "type": "object",
+      "properties": {
+        "seedItemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "itemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "FeatureBlockListParameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "FeatureWhiteListParameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "RuleInfo": {
+      "description": "the business rule response object definition",
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int64",
+          "description": "Unique identifier for Rule",
+          "type": "integer"
+        },
+        "type": {
+          "description": "Type of the rule",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/definitions/RuleParameters",
+          "description": "Rule Parameteres"
+        }
+      }
+    },
+    "RuleInfoList": {
+      "description": "response object for GetAllRules API",
+      "type": "object",
+      "properties": {
+        "rules": {
+          "description": "List of Rules for a given user",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RuleInfo"
+          }
+        }
+      }
+    },
+    "UsageImportStats": {
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "description": "Unique identifier for usage file",
+          "type": "string"
+        },
+        "processedLineCount": {
+          "format": "int32",
+          "description": "Number of total processed lines in uploaded catalog file",
+          "type": "integer"
+        },
+        "errorLineCount": {
+          "format": "int32",
+          "description": "Number of total error lines in uploaded catalog file",
+          "type": "integer"
+        },
+        "importedLineCount": {
+          "format": "int32",
+          "description": "Number of successfully imported catalog items from uploaded catalog file",
+          "type": "integer"
+        },
+        "errorSummary": {
+          "description": "Details of errors during catalog import",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ImportErrorStats"
+          }
+        }
+      }
+    },
+    "UsageInfo": {
+      "description": "Usage data file information",
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "description": "The usage data file id",
+          "type": "string"
+        },
+        "usageDisplayName": {
+          "description": "The display name of the usage data file",
+          "type": "string"
+        },
+        "sizeInMegabytes": {
+          "format": "double",
+          "description": "The usage data file size in megabytes",
+          "type": "number"
+        },
+        "dateModified": {
+          "format": "date-time",
+          "description": "The last modification date of the usage data file",
+          "type": "string"
+        },
+        "usedInModel": {
+          "description": "Indicates whether this usage file is used in the model",
+          "type": "boolean"
+        }
+      }
+    },
+    "UsageEvent": {
+      "description": "Usage event",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "description": "The id of the user that created the events",
+          "type": "string"
+        },
+        "buildId": {
+          "format": "int64",
+          "description": "The build id associated with the events",
+          "type": "integer"
+        },
+        "events": {
+          "description": "The events information",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsageEventInfo"
+          }
+        }
+      }
+    },
+    "UsageEventInfo": {
+      "description": "Information describing a usage event",
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "description": "The type of the event",
+          "enum": [
+            "Click",
+            "RecommendationClick",
+            "AddShopCart",
+            "RemoveShopCart",
+            "Purchase"
+          ],
+          "type": "string"
+        },
+        "itemId": {
+          "description": "The id of the item in context",
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "The time of the event",
+          "type": "string"
+        },
+        "count": {
+          "format": "int32",
+          "description": "The number of items",
+          "type": "integer"
+        },
+        "unitPrice": {
+          "format": "float",
+          "description": "The price of the item in context",
+          "type": "number"
+        }
+      }
+    },
+    "ModelUsageStatisticsResponse": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "description": "The input interval for this response",
+          "type": "string"
+        },
+        "statistics": {
+          "description": "The usage statistics",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsageStatistics"
+          }
+        }
+      }
+    },
+    "UsageStatistics": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "description": "The event type of the usage statistics event",
+          "type": "string"
+        },
+        "count": {
+          "format": "int64",
+          "description": "The event type of the usage statistics event",
+          "type": "integer"
+        }
+      }
+    },
+    "UsageStatisticsResponse": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "description": "The input interval for this response",
+          "type": "string"
+        },
+        "buildId": {
+          "format": "int64",
+          "description": "The input buildId (note that this is optional)",
+          "type": "integer"
+        },
+        "statistics": {
+          "description": "The usage statistics",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsageStatistics"
+          }
+        }
+      }
+    },
+    "UsageInfoArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UsageInfo"
+      }
+    },
+    "Models{modelId}Usage{fileId}Get200ApplicationJsonResponse": {
+      "type": "string"
+    },
+    "Models{modelId}Usage{fileId}Get200TextJsonResponse": {
+      "type": "string"
+    },
+    "Models{modelId}Usage{fileId}Get200ApplicationXmlResponse": {
+      "type": "string"
+    },
+    "Models{modelId}Usage{fileId}Get200TextXmlResponse": {
+      "type": "string"
+    }
+  }
+}
